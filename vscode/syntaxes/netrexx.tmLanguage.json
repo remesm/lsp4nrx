@@ -1,0 +1,97 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "NetRexx",
+  "scopeName": "source.netrexx",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#constants" },
+    { "include": "#keywords-control" },
+    { "include": "#keywords-definition" },
+    { "include": "#keywords-sub" },
+    { "include": "#special-words" },
+    { "include": "#strings" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-dash.netrexx",
+          "begin": "--",
+          "end": "$"
+        },
+        {
+          "name": "comment.block.netrexx",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "keywords-control": {
+      "patterns": [
+        {
+          "name": "keyword.control.netrexx",
+          "match": "(?i)\\b(address|do|exit|go|if|interpret|iterate|leave|loop|nop|numeric|parse|return|say|select|signal|trace)\\b"
+        }
+      ]
+    },
+    "keywords-definition": {
+      "patterns": [
+        {
+          "name": "storage.type.netrexx",
+          "match": "(?i)\\b(class|import|method|options|package|properties)\\b"
+        },
+        {
+          "name": "storage.modifier.netrexx",
+          "match": "(?i)\\b(abstract|adapter|constant|default|final|inheritable|interface|native|private|public|shared|static|transient|volatile|indirect|deprecated)\\b"
+        }
+      ]
+    },
+    "keywords-sub": {
+      "patterns": [
+        {
+          "name": "keyword.control.sub.netrexx",
+          "match": "(?i)\\b(catch|finally|end|then|else|when|otherwise|to|by|for|over|forever|while|until|returns|signals|extends|uses|implements|digits|form|scientific|engineering|label|protect|case)\\b"
+        },
+        {
+          "name": "keyword.other.annotation.netrexx",
+          "match": "@[a-zA-Z_][a-zA-Z0-9_]*"
+        }
+      ]
+    },
+    "special-words": {
+      "patterns": [
+        {
+          "name": "variable.language.netrexx",
+          "match": "(?i)\\b(ask|asknoecho|class|digits|form|length|parent|rc|source|sourceline|super|this|trace|version)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.netrexx",
+          "match": "(?i)\\bnull\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.netrexx",
+          "begin": "'",
+          "end": "'"
+        },
+        {
+          "name": "string.quoted.double.netrexx",
+          "begin": "\"",
+          "end": "\""
+        },
+        {
+          "name": "string.quoted.triple.netrexx",
+          "begin": "\"\"\"",
+          "end": "\"\"\"$"
+        } 
+      ]
+    }
+  }
+}

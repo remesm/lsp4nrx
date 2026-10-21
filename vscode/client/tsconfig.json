@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"module": "Node16",
+    "moduleResolution": "node16",
+		"target": "ES2024",
+ 		"lib": [
+			"ES2024",
+			"ESNext.Disposable"      // This specifically fixes the [Symbol.dispose] error
+		],
+    "skipLibCheck": true, // Essential for ignoring mismatches in vscode-jsonrpc
+ 		"outDir": "out",
+		"rootDir": "src",
+		"sourceMap": true,
+		"strict": true
+	},
+	"include": [
+		"src/*.ts"
+	],
+	"exclude": [
+		"node_modules",
+		".vscode-test",
+		"out/extension.js",
+	]
+}
+

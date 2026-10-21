@@ -1,0 +1,186 @@
+{
+	"name": "NetRexx",
+	"version": "1.0.4",
+	"description": "Language Server Protocol and Debug Adapter Protocol support for NetRexx",
+	"displayName": "NetRexx Language",
+	"publisher": "MRE",
+	"license": "ICU 1.8.1",
+	"icon": "images/NetRexxKing128.png",
+	"activationEvents": [
+		"onLanguage:netrexx",
+		"onDebug:netrexx",
+    "onStartupFinished",
+    "onDebugResolve:netrexx"
+	],
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"main": "./client/out/extension.js",
+	"contributes": {
+		"languages": [
+			{
+				"id": "netrexx",
+				"aliases": [
+					"NetRexx",
+					"netrexx"
+				],
+				"extensions": [
+					".nrx"
+				]
+			}
+		],
+		"grammars": [
+			{
+				"language": "netrexx",
+				"scopeName": "source.netrexx",
+				"path": "./syntaxes/netrexx.tmLanguage.json"
+			}
+		],
+		"breakpoints": [
+			{ "language": "netrexx" }
+		],
+		"debuggers": [
+			{
+				"type": "netrexx",
+				"label": "NetRexx Debug",
+				"languages": ["netrexx"],
+				"configurationAttributes": {
+					"launch": {
+						"required": ["program"],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "NetRexx program to run",
+								"default": "${file}"
+							},
+							"args": {
+								"type": "array",
+								"items": { "type": "string" },
+								"default": [],
+								"description": "Arguments passed to the program"
+							},
+							"cwd": {
+								"type": "string",
+								"default": "${workspaceFolder}",
+								"description": "Current working directory"
+							},
+							"args": {
+   						  "type": ["array", "string"],
+						    "items": { "type": "string" },
+   							"description": "Arguments passed to the program."
+							}
+						}
+					}
+				},
+				"initialConfigurations": [
+					{
+						"type": "netrexx",
+						"request": "launch",
+						"name": "Debug NetRexx Program",
+						"program": "${file}"
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "NetRexx: Launch",
+						"description": "Debug a NetRexx program",
+						"body": {
+							"type": "netrexx",
+							"request": "launch",
+							"name": "Debug NetRexx Program",
+							"program": "^\"\\${file}\""
+						}
+					}
+				]
+			}
+		],
+ 
+		"configuration": [
+			{
+				"title": "Common settings",
+		    "id": "netrexx.common",
+				"order": 1,
+				"type": "object",
+				"scope": "resource",
+				"properties": {
+					"netrexx.classpath": {
+						"order": 1,
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"description": "A list of directories or JAR files containing dependent classes. Separate multiple entries with a semicolon (;) on Windows or a colon (:) on macOS or Linux"
+					},
+					"netrexx.cwd": {
+						"order": 2,
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"description": "Set current working directory"
+					},
+					"netrexx.log": {
+						"order": 3,
+						"type": "boolean",
+						"default": false,
+						"scope": "resource",
+						"description": "Enable verbose logging on stderr"
+					}
+
+				}
+			},
+			{
+				"title": "Language Server Protocol settings",
+		    "id": "netrexx.lsp",
+				"order": 2,
+				"type": "object",
+				"scope": "resource",
+				"properties": {
+					"netrexx.lsp.onChange": {
+						"order": 1,
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"description": "Delay in milliseconds after typing before parsing occurs (default: --onChange=1000); use --onChange=off to disable interactive parsing"
+					}
+				}
+			},
+			{
+				"title": "Debug Adapter Protocol settings",
+		    "id": "netrexx.dap",
+				"order": 3,
+				"type": "object",
+				"scope": "resource",
+				"properties": {
+					"netrexx.dap.rx": {
+						"order": 3,
+						"type": "boolean",
+						"default": false,
+						"scope": "resource",
+						"description": "Expose RxInterpreter"
+					},
+					"netrexx.dap.cl": {
+						"order": 4,
+						"type": "boolean",
+						"default": false,
+						"scope": "resource",
+						"description": "Single step per clause"
+					},
+					"netrexx.dap.program": {
+						"order": 1,
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"markdownDescription": "Program(s) to debug (.nrx file, optionally with NetRexxC options). Leave empty to debug the active editor's file.."
+					},
+					"netrexx.dap.arguments": {
+						"order": 2,
+
+						"type": "string",
+						"default": "",
+						"scope": "resource",
+						"markdownDescription": "Arguments passed to the program being debugged. Use quotes for values containing spaces."
+					}
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,41 @@
+# Exclude Source Code
+src/**
+**/*.ts
+**/*.nrx
+tsconfig.json
+**/*.map
+
+# Exclude Local Cache and Tooling
+.vscode/**
+.vscode-test/**
+node_modules/**
+.git/**
+.github/**
+.gitignore
+.editorconfig
+
+# Exclude Build Scripts
+webpack.config.js
+vsc-extension-quickstart.md
+
+# IMPORTANT: Ensure the compiled/build output is NOT ignored
+!dist/**
+!out/**
+
+package.sh
+
+# Exclude Source and Config
+**/tsconfig.json
+**/*.ts
+**/*.nrx
+
+# Exclude unnecessary node_modules files (READMEs, Tests, etc)
+**/node_modules/**/*.md
+**/node_modules/**/*.txt
+**/node_modules/**/*.map
+**/node_modules/**/package-lock.json
+**/node_modules/**/tsconfig.json
+
+# Exclude local workspace folders
+.vscode/
+.git/
