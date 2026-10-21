@@ -1,0 +1,10 @@
+package org.netrexx
+
+import com.intellij.lang.Language
+
+class NetRexxLanguage public extends Language
+  properties public constant
+    INSTANCE = NetRexxLanguage NetRexxLanguage()
+
+  method NetRexxLanguage() private
+    super('NetRexx')

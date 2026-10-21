@@ -1,0 +1,78 @@
+package org.netrexx
+
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.Service
+import com.intellij.util.xmlb.XmlSerializerUtil
+import com.intellij.ide.util.PropertiesComponent
+
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.project.Project
+
+--@State(name  = 'NetRexxSettings', storages = @Storage('NetRexxSettings.xml'))
+--@Service(Service.Level.APP)
+
+--@State(name = 'NetRexxSettings', storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@Service(Service.Level.PROJECT)
+
+class NetRexxSettingsService public final
+
+  properties public
+    set = Setting
+    prop =  PropertiesComponent
+    PREFIX = 'org.netrexx.'
+
+  properties private
+  --  proj = Project
+
+  method NetRexxSettingsService(project = Project) public
+    prop = PropertiesComponent.getInstance(project)
+    set = Setting()
+ --   proj = project
+
+--  method NetRexxSettingsService() public
+--    prop = PropertiesComponent.getInstance()
+ --   set = Setting()
+
+  method getInstance(proj = Project) public static returns NetRexxSettingsService
+
+    return NetRexxSettingsService (proj.getService(NetRexxSettingsService.class))
+--    return proj.getService(NetRexxSettingsService.class)
+  --  return NetRexxSettingsService project.getService(NetRexxSettingsService.class)
+  --  return NetRexxSettingsService ApplicationManager.getApplication().getService(NetRexxSettingsService.class)
+
+  method getState() public returns Setting
+    set.onChange = prop.getValue(PREFIX'onChange', '')
+    set.classpath = prop.getValue(PREFIX'classpath', '')
+    set.log = prop.getValue(PREFIX'log', 0)
+    set.cwd = prop.getValue(PREFIX'cwd', '')
+    set.rx = prop.getValue(PREFIX'rx', 0)
+    set.cl = prop.getValue(PREFIX'cl', 0)
+    return set
+
+  method saveState(set_ = Setting)
+    set.onChange = set_.onChange
+    set.classpath = set_.classpath
+    set.log = set_.log
+    set.cwd = set_.cwd
+    set.rx = set_.rx
+    set.cl = set_.cl
+    prop.setValue((PREFIX'onChange'), set_.onChange)
+    prop.setValue(PREFIX'classpath', set_.classpath)
+    prop.setValue(PREFIX'log', set_.log, 0)
+    prop.setValue(PREFIX'cwd', set_.cwd)
+    prop.setValue(PREFIX'rx', set_.rx, 0)
+    prop.setValue(PREFIX'cl', set_.cl, 0)
+
+
+class NetRexxSettingsService.Setting public
+  properties public
+    onChange  = String ''
+    classpath = String ''
+    log       = boolean 0
+    cwd       = String ''
+    rx        = boolean 0
+    cl        = boolean
+

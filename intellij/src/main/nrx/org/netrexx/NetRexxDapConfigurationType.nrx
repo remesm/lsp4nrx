@@ -1,0 +1,43 @@
+package org.netrexx
+options strictcase
+
+import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.openapi.util.IconLoader
+import javax.swing.Icon
+
+class NetRexxDapConfigurationType implements ConfigurationType
+
+  properties private
+    factory = ConfigurationFactory
+
+  method NetRexxDapConfigurationType()
+
+    factory = NetRexxDapConfigurationFactory(this)
+
+  method getId() public returns String
+
+    return 'NetRexxDebug'
+
+  method getDisplayName() public returns String
+
+    return 'NetRexx Debug'
+
+  method getConfigurationTypeDescription() public returns String
+
+    return 'Debug a NetRexx program'
+
+  method getIcon() public returns Icon
+    do
+      iconClass = Class.forName('com.intellij.icons.AllIcons$Nodes')   -- no nrx acccess to the inner class, use reflection
+      iconField = iconClass.getField('Console')
+
+      return Icon iconField.get(null)
+    catch Exception
+      nop
+    end
+    return null
+
+  method getConfigurationFactories() public returns ConfigurationFactory[]
+
+    return [ConfigurationFactory factory]

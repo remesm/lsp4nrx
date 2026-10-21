@@ -1,0 +1,126 @@
+package org.netrexx
+
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.Project
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.ui.FormBuilder
+import com.redhat.devtools.lsp4ij.LanguageServerManager
+
+
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+
+class NetRexxConfigurable public implements Configurable
+
+  onChangeField  = JBTextField()
+  classpathField = JBTextField()
+  cwdField       = JBTextField()
+  logCheckbox    = JBCheckBox('Enable verbose logging on stderr')
+  rxCheckbox     = JBCheckBox('Expose RxInterpreter (for the adventurous)')
+  clCheckbox     = JBCheckBox('Single step per clause (default per line)')
+  panel          = JPanel
+  proj           = Project
+  validator      = NetRexxSettingsValidator
+
+   method NetRexxConfigurable(project_ = Project) public
+    proj = project_
+    validator = NetRexxSettingsValidator(proj)
+
+  method getDisplayName() public returns String
+    return 'NetRexx Settings'
+
+  method createComponent() public returns JComponent
+ --   state = NetRexxSettingsService.getInstance().getState()
+    state = NetRexxSettingsService.getInstance(proj).getState()
+
+    onChangeField.setText(state.onChange)
+    classpathField.setText(state.classpath)
+    logCheckbox.setSelected(state.log)
+    cwdField.setText(state.cwd)
+    rxCheckbox.setSelected(state.rx)
+    clCheckbox.setSelected(state.cl)
+
+
+    builder = FormBuilder.createFormBuilder()
+    builder.addComponent(JLabel(''))
+    builder.addComponent(JLabel('-------------------------- Common settings --------------------------'))
+    builder.addComponent(JLabel('A list of directories or JAR files containing dependent classes.'))
+    builder.addComponent(JLabel('Separate multiple entries with a semicolon (;) on Windows or a colon (:) on macOS or Linux'))
+    builder.addLabeledComponent('classpath:', classpathField)
+    builder.addComponent(JLabel('Current working directory'))
+    builder.addLabeledComponent('cwd:', cwdField)
+    builder.addComponent(logCheckbox)
+    builder.addComponent(JLabel(''))
+    builder.addComponent(JLabel('----------------- Language Server Protocol settings -----------------'))
+    builder.addComponent(JLabel('Delay in milliseconds after typing before parsing occurs, default: --onChange=1000'))
+    builder.addLabeledComponent('Use --onChange=off to disable interactive parsing', onChangeField)
+
+    builder.addComponent(JLabel(''))
+    builder.addComponent(JLabel('------------------ Debug Adapter Protocol settings ------------------'))
+    builder.addComponent(rxCheckbox)
+    builder.addComponent(clCheckbox)
+    builder.addComponentFillVertically(JPanel(), 0)
+    panel = builder.getPanel()
+    return panel
+
+  method isModified() public returns boolean
+    -- state = NetRexxSettingsService.getInstance().getState()
+    state = NetRexxSettingsService.getInstance(proj).getState()
+
+    return \(onChangeField.getText().equals(state.onChange)) | -
+           \(classpathField.getText().equals(state.classpath)) | -
+           \(cwdField.getText().equals(state.cwd)) | -
+           (logCheckbox.isSelected() \= state.log) | -
+           (rxCheckbox.isSelected() \= state.rx) | -
+           (clCheckbox.isSelected() \= state.cl)
+
+  method apply() public signals ConfigurationException
+
+--    workspaceDir = proj.getBasePath()
+
+    state = NetRexxSettingsService.getInstance(proj).getState()
+
+    prevCwd = state.cwd
+    state.cwd  = cwdField.getText().trim()
+    NetRexxSettingsService.getInstance(proj).saveState(state)
+
+    validCwd   = validator.resolveWorkingDirectory('', 1)  -- Validate only
+
+    if validCwd.length() == 0 then do
+      state.cwd = prevCwd
+      NetRexxSettingsService.getInstance(proj).saveState(state)
+
+      signal ConfigurationException('Invalid working directory: 'state.cwd)
+    end
+
+    -- Save state
+    state.onChange  = onChangeField.getText()
+    state.classpath = classpathField.getText()
+    state.log       = logCheckbox.isSelected()
+    state.cwd       = cwdField.getText()
+    state.rx        = rxCheckbox.isSelected()
+    state.cl        = clCheckbox.isSelected()
+
+    -- NetRexxSettingsService.getInstance().saveState(state)
+    NetRexxSettingsService.getInstance(proj).saveState(state)
+
+    -- Restart the LSP server to apply new command-line arguments
+    LanguageServerManager.getInstance(proj).stop('NetRexxLspServer')
+    LanguageServerManager.getInstance(proj).start('NetRexxLspServer')
+
+  method reset() public
+--    state = NetRexxSettingsService.getInstance().getState()
+    state = NetRexxSettingsService.getInstance(proj).getState()
+
+    onChangeField.setText(state.onChange)
+    classpathField.setText(state.classpath)
+    logCheckbox.setSelected(state.log)
+    cwdField.setText(state.cwd)
+    rxCheckbox.setSelected(state.rx)
+    clCheckbox.setSelected(state.cl)
+

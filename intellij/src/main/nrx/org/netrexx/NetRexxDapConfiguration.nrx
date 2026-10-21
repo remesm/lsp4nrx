@@ -1,0 +1,84 @@
+package org.netrexx
+options strictcase
+
+import java.io.File
+
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RuntimeConfigurationError
+import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.project.Project
+
+import com.redhat.devtools.lsp4ij.dap.DebugMode
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+
+
+class NetRexxDapConfiguration extends DAPRunConfiguration
+
+  properties private
+    proj      = Project
+    validator = NetRexxSettingsValidator
+--    log       = Logger.getInstance(NetRexxDapConfiguration.class)
+
+
+  method NetRexxDapConfiguration(proj_ = Project, -
+                                    factory = ConfigurationFactory, -
+                                    name = String)
+
+    super(proj_, factory, name)
+    proj = proj_
+    setDebugMode(DebugMode.LAUNCH)
+
+
+  method getConfigurationEditor() public returns SettingsEditor
+
+    return NetRexxDapSettingsEditor()
+
+  method checkConfiguration() public signals RuntimeConfigurationException
+
+    options = getOptions()
+
+    validator = NetRexxSettingsValidator(proj, options)
+
+    program = options.getFile()
+    if program = null then program = ''
+
+    state = NetRexxSettingsService.getInstance(proj).getState()
+    if state.cwd \= null then do
+      if state.cwd.trim().length() > 0 then do
+        cwd = state.cwd
+      end
+    end
+
+    if cwd = null then cwd = ''
+
+--    log.info('checkConfiguration : program: 'program)
+--    log.info('checkConfiguration : cwd: 'cwd)
+
+    do
+      program = validator.resolveProgram()
+    catch e=Exception
+      signal RuntimeConfigurationError(e.getMessage())
+    end
+
+    cwd = validator.resolveWorkingDirectory(null, 1)  -- validate only, no
+
+    if cwd.trim().length() = 0 then do
+      Notification('org.netrexx.cwd', 'Unable to resolve working directory', NotificationType.WARNING).notify(proj)
+      signal RuntimeConfigurationError('Invalid working directory ' cwd)
+    end
+
+    cwd  = validator.resolveWorkingDirectory(program)       -- here we know cwd is valid and substitured
+
+--    log.info('checkConfiguration : cwd = 'cwd)
+
+
+    -- Also check LSP4IJ's normal server configuration.
+    super.checkConfiguration()
+
+  method getDapOptions() public returns DAPRunConfigurationOptions
+    return (DAPRunConfigurationOptions getOptions())

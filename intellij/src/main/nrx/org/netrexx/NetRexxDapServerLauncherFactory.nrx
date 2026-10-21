@@ -1,0 +1,53 @@
+/* ------------------------------------------------------------------ */
+/* NetRexxDebugAdapterDescriptorFactory - registered in plugin.xml    */
+/* via the com.redhat.devtools.lsp4ij.debugAdapterServer extension    */
+/* point (factoryClass attribute).                                    */
+/* ------------------------------------------------------------------ */
+package org.netrexx
+options strictcase
+
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.redhat.devtools.lsp4ij.dap.descriptors.DebugAdapterDescriptor
+import com.redhat.devtools.lsp4ij.dap.descriptors.DebugAdapterDescriptorFactory
+import com.intellij.execution.configurations.RunConfigurationOptions
+import com.redhat.devtools.lsp4ij.dap.DebugMode
+
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.project.Project
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.SettingsEditor
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
+
+class NetRexxDapServerLauncherFactory extends DebugAdapterDescriptorFactory
+
+--@Override
+  method createDebugAdapterDescriptor(options = RunConfigurationOptions, environment = ExecutionEnvironment) public returns DebugAdapterDescriptor
+
+  serverDef = getServerDefinition()
+  return NetRexxDapServerLauncher(options, environment, serverDef)
+
+--@Override
+method getLaunchConfigurations() public returns java.util.List
+
+  configurations = java.util.ArrayList()
+
+    launchJson = ('{' || -
+    '"type":"netrexx",' || -
+    '"name":"Launch NetRexx file",' || -
+    '"request":"launch",' || -
+    '"program":"${file}",' || -
+    '"cwd":"${workspaceFolder}"' || -
+    '}').toString()
+
+  debugMode = com.redhat.devtools.lsp4ij.dap.DebugMode.get('launch')
+
+  configuration = com.redhat.devtools.lsp4ij.dap.LaunchConfiguration( -
+      'netrexx-launch-file', -
+      'Launch NetRexx file', -
+      launchJson, -
+      debugMode)
+
+  configurations.add(configuration)
+
+  return configurations

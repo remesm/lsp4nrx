@@ -1,0 +1,163 @@
+/* ------------------------------------------------------------------ */
+/* NetRexxDebugAdapterDescriptor - LSP4IJ DebugAdapterDescriptor      */
+/* Launches org.netrexx.lsp.NetRexxDapServer over stdio and supplies  */
+/* the DAP launch parameters for the file being debugged.             */
+/* ------------------------------------------------------------------ */
+package org.netrexx
+options strictcase
+
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.RunConfigurationOptions
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.plugins.PluginManagerCore
+--import com.redhat.devtools.lsp4ij.dap.configurations.options.FileOptionConfigurable
+--import com.redhat.devtools.lsp4ij.dap.configurations.options.WorkingDirectoryConfigurable
+import com.redhat.devtools.lsp4ij.dap.definitions.DebugAdapterServerDefinition
+import com.redhat.devtools.lsp4ij.dap.descriptors.DebugAdapterDescriptor
+import com.redhat.devtools.lsp4ij.dap.client.LaunchUtils
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
+import com.redhat.devtools.lsp4ij.dap.client.LaunchUtils.LaunchContext
+--import com.redhat.devtools.lsp4ij.dap.client.LaunchUtils.LaunchContext
+import java.util.HashMap
+import java.util.Map
+import java.io.File
+import org.netrexx.NetRexxFileType
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+--import com.intellij.openapi.application.ApplicationManager
+--import com.intellij.openapi.components.PersistentStateComponent
+--import com.intellij.openapi.components.State
+--import com.intellij.openapi.components.Storage
+--import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
+
+class NetRexxDapServerLauncher extends DebugAdapterDescriptor
+
+  -- hardcode this to wherever the plugin ships its jars; keep it in
+  -- sync with however NetRexxLspServerFactory launches the LSP side
+  properties public
+    options     = RunConfigurationOptions
+    environment = ExecutionEnvironment
+    state       = NetRexxSettingsService.Setting
+    cwd         = String
+    file        = String
+    log         = Logger
+    validator   = NetRexxSettingsValidator
+
+
+  method NetRexxDapServerLauncher(options_ = RunConfigurationOptions, environment_ = ExecutionEnvironment, serverDefinition = DebugAdapterServerDefinition)
+    super(options_, environment_, serverDefinition)
+    options = options_
+    environment = environment_
+
+    log       = Logger.getInstance(NetRexxDapServerLauncher.class)
+    validator = NetRexxSettingsValidator(environment.getProject(), options_)
+
+  method startServer() public returns ProcessHandler signals ExecutionException
+
+ --   log.info('NetRexx DAP: Enter startServer')
+
+    pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId('org.netrexx.lsp4nrx'))
+    dir = pluginDescriptor.getPluginPath().toAbsolutePath().toString()
+    jar = dir || '/lib/NetRexxC.jar'
+
+--    state = NetRexxSettingsService.getInstance().getState()
+--    state = NetRexxSettingsService.getInstance(proj).getState()
+    state = NetRexxSettingsService.getInstance(environment.getProject()).getState()
+
+
+    if state.classpath \= null then if state.classpath.trim().length() > 0 then
+      jar = state.classpath.trim() || File.pathSeparator || jar
+
+    cmd = [String 'java', '-cp', jar, 'org.netrexx.lsp.NetRexxDapServer']
+--    cmd = 'java -cp 'jar' org.netrexx.lsp.NetRexxDapServer'
+
+--    commandLine = createStartServerCommandLine(cmd)
+    commandLine = GeneralCommandLine(cmd)
+
+    if state.log then
+      commandLine.addParameter('--log')
+
+    if state.rx then
+      commandLine.addParameter('--rx')
+
+    if state.cl then
+      commandLine.addParameter('--cl')
+
+    cwd  = validator.resolveWorkingDirectory(file, 1)
+
+    if cwd.trim().length() = 0 then do
+      Notification('org.netrexx.cwd', 'Unable to resolve working directory', NotificationType.WARNING).notify(environment.getProject())
+      signal ExecutionException('Cannot debug 'file', unable to resolve working directory')
+    end
+
+
+    do
+      file = validator.resolveProgram()
+    catch e=Exception
+       signal ExecutionException(e.getMessage())
+    end
+
+    cwd  = validator.resolveWorkingDirectory(file, 1)
+
+    if cwd.trim().length() = 0 then do
+      Notification('org.netrexx.cwd', 'Unable to resolve working directory', NotificationType.WARNING).notify(environment.getProject())
+      signal ExecutionException('Cannot debug 'file', unable to resolve working directory')
+    end
+
+    cwd  = validator.resolveWorkingDirectory(file)       -- here we know cwd is valid and substitured
+
+    commandLine.setWorkDirectory(cwd)
+
+--    consoleView.print("NetRexx DAP: Session initialized\n", ConsoleViewContentType.SYSTEM_OUTPUT)
+
+--    log.info('startServer : cwd='cwd)
+
+    return startServer(commandLine);
+
+  method getDapParameters() public returns Map
+
+    -- Preserve the custom JSON launch parameters (args, env, etc.).
+    -- Interpret ${file} and ${workspaceFolder} relative to this project.
+
+    workspaceDir = validator.getWorkspaceFolderPath()
+    dapOptions = (DAPRunConfigurationOptions options)
+    jsonParams = LaunchUtils.getDapParameters(dapOptions.getDapParameters(), -
+                                               LaunchUtils.LaunchContext(file, workspaceDir))
+
+    params = HashMap()
+    params.putAll(jsonParams)
+
+    -- Preserve other JSON keys, but keep this launcher's established
+    -- NetRexx program and request parameters.
+    params.put('type', 'netrexx')
+    params.put('request', 'launch')
+    params.put('program', file)
+    params.put('cwd', cwd)
+
+    log.info('NetRexx DAP: getDapParameters : 'params.toString())
+
+    return params
+
+
+    method isDebuggableFile(vfile = VirtualFile, project = Project) public returns boolean
+
+      result = vfile.getName().toLowerCase().endsWith('.nrx')
+      return result
+
+  -- ties this descriptor to the same file type your LSP server declares,
+  -- so LSP4IJ can pre-select it in the Mappings tab
+  method getFileType() public returns FileType
+    return NetRexxFileType.INSTANCE
+

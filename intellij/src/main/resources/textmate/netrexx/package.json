@@ -1,0 +1,13 @@
+// package.json
+{
+  "name": "netrexx",
+  "displayName": "NetRexx",
+  "contributes": {
+    "languages": [{ "id": "NetRexx", "extensions": [".nrx"] }],
+    "grammars": [{
+      "language": "NetRexx",
+      "scopeName": "source.netrexx",
+      "path": "./syntaxes/netrexx.tmLanguage.json"
+    }]
+  }
+}

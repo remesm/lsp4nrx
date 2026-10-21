@@ -1,0 +1,24 @@
+package org.netrexx
+
+import com.intellij.openapi.fileTypes.LanguageFileType
+import javax.swing.Icon
+
+class NetRexxFileType public extends LanguageFileType
+
+  properties public constant
+    INSTANCE = NetRexxFileType NetRexxFileType()
+
+  method NetRexxFileType() private
+    super(NetRexxLanguage.INSTANCE)
+
+  method getName() public returns String
+    return 'NetRexx'
+
+  method getDescription() public returns String
+    return 'NetRexx source file'
+
+  method getDefaultExtension() public returns String
+    return 'nrx'
+
+  method getIcon() public returns Icon
+    return null  -- TODO: add your icon here

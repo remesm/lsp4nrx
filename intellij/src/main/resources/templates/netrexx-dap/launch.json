@@ -1,0 +1,7 @@
+{
+  "type": "netrexx",
+  "name": "Debug NetRexx program",
+  "request": "launch",
+  "program": "${file}",
+  "cwd": "${workspaceFolder}"
+}

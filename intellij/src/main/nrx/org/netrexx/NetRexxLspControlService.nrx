@@ -1,0 +1,36 @@
+package org.netrexx
+
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.application.ApplicationManager
+import com.redhat.devtools.lsp4ij.LanguageServerManager
+import com.redhat.devtools.lsp4ij.LanguageServerManager.StopOptions
+
+@com.intellij.openapi.components.Service(Service.Level.PROJECT)
+class NetRexxLspControlService public final
+
+  proj = Project
+
+  method NetRexxLspControlService(project_ = Project) public
+    this.proj = project_
+
+  method stopLanguageServer() public
+    if proj.isDisposed() then
+      return
+
+/*    task = Runnable() -
+      run() public -
+        manager = LanguageServerManager.getInstance(proj)
+        -- Gracefully stops all running LSP servers for this project
+        manager.stop('org.netrexx.lsp4nrx', LanguageServerManager.StopOptions.DEFAULT)
+*/
+    ApplicationManager.getApplication().executeOnPooledThread(NetRexxLspControlService.Task())
+ --       ApplicationManager.getApplication().executeOnPooledThread( /* ** anonymous class ** */ NetRexxLspControlService.__anon_0_Runnable()        )
+
+
+class NetRexxLspControlService.Task private dependent implements Runnable
+  method run
+    manager = LanguageServerManager
+    manager = LanguageServerManager.getInstance(parent.proj)
+    manager.stop("org.netrexx.lsp4nrx", LanguageServerManager.StopOptions.DEFAULT)
+

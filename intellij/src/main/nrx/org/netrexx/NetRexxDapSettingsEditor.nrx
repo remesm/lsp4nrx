@@ -1,0 +1,147 @@
+package org.netrexx
+options strictcase
+
+import com.intellij.util.ui.FormBuilder
+import com.intellij.ui.components.JBTextField
+
+import javax.swing.JPanel
+import javax.swing.JLabel
+import javax.swing.JTextField
+import javax.swing.JComponent
+
+import java.awt.Dimension
+import com.intellij.util.ui.JBUI
+import java.awt.GridLayout
+
+import com.intellij.openapi.options.SettingsEditor
+
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.options.ConfigurationException
+
+import com.google.gson.JsonParser
+import com.google.gson.JsonObject
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+
+import com.intellij.util.execution.ParametersListUtil
+
+import java.util.ArrayList
+
+
+class NetRexxDapSettingsEditor extends SettingsEditor
+
+  properties private
+    panel        = JPanel
+    programField = JTextField
+    argsField    = JTextField
+ --   log       = Logger.getInstance(NetRexxDapConfiguration.class)
+
+
+  method NetRexxDapSettingsEditor()
+
+    super()
+
+ --   log       = Logger.getInstance(NetRexxDapSettingsEditor.class)
+    programField = JTextField(40)
+    argsField     = JTextField(40)
+    programField.setColumns(30)
+    argsField.setColumns(30)
+
+-- Help text block formatted with HTML
+    helpText = '<html>' -
+               '<b>Program Search Behavior:</b>' -
+               '<ul style=\'margin-top: 2px; margin-left: 15px;\'>' -
+               '<li><b>Empty:</b> Debugs the currently active file</li>' -
+               '<li><b>Bare filename</b> (e.g., <code>hello.nrx</code>): Searches within the current workspace</li>' -
+               '<li><b>Relative path</b> (e.g., <code>./src/hello.nrx</code>): Resolves relative to the working directory specified in Settings</li>' -
+               '<li><b>Absolute path</b> (e.g., <code>/usr/bin/hello.nrx</code>): Uses path as specified</li>' -
+               '</ul>' -
+               'Multiple files can be specified.<br>Enclose files containing spaces in double quotes (").</html>'
+
+    -- Build the form using IntelliJ's FormBuilder
+    form = FormBuilder.createFormBuilder()
+    form.addComponent(JLabel(helpText))
+    form.addLabeledComponent(JLabel('Program:'), programField, 1, 0)
+    form.addComponent(JLabel(''))
+    form.addComponent(JLabel('<html>Enclose arguments containing spaces in double quotes (")'))
+    form.addLabeledComponent(JLabel("Arguments:"), argsField, 1, 0)
+    form.addComponentFillVertically(JPanel(), 0)  -- Pushes controls to the top
+    panel = form.getPanel()
+
+
+  method createEditor() protect returns JComponent
+
+    return panel
+
+  method resetEditorFrom(settings = Object)
+
+    config = (NetRexxDapConfiguration settings)
+--      signal ExecutionException('Cannot debug 'file', unable to resolve working directory')
+
+    program = config.getFile()
+
+    if program = null then
+      program = ''
+
+    programField.setText(program)
+
+    argsField.setText('')
+
+    options = config.getDapOptions()
+    launchJson = options.getLaunchConfiguration()
+
+    if launchJson \= null then do
+      if launchJson.trim().length() > 0 then do
+        launchObject = JsonParser.parseString(launchJson).getAsJsonObject()
+        argsNode = launchObject.get('args')
+        if argsNode \= null then do
+          if argsNode.isJsonArray() then do
+            values = ArrayList()
+            iterator = argsNode.getAsJsonArray().iterator()
+            loop while iterator.hasNext()
+              element = JsonElement iterator.next()
+              values.add(element.getAsString())
+            end
+            argsField.setText(ParametersListUtil.join(values))
+          end
+        end
+      end
+    end
+
+  method applyEditorTo(settings = Object) protect
+
+
+--    log.info('NetRexx DAP: apply')
+
+    config = (NetRexxDapConfiguration settings)
+
+    config.setFile(programField.getText().trim())
+
+      -- Retrieve the existing DAP launch configuration
+    options = config.getDapOptions()
+    launchJson = options.getLaunchConfiguration()
+    if launchJson = null then
+      launchJson = ''
+
+    -- Create or retrieve the launch JSON object
+    if launchJson.trim().length() = 0 then
+      launchObject = JsonObject()
+    else
+      launchObject = JsonParser.parseString(launchJson).getAsJsonObject()
+
+    -- Convert the Arguments field into a JSON array
+    argsArray = JsonArray()
+    arguments = ParametersListUtil.parse(argsField.getText())
+    iterator = arguments.iterator()
+    loop while iterator.hasNext()
+      argument = (String iterator.next())
+      argsArray.add(argument)
+    end
+
+    -- Store the arguments in the launch configuration
+    launchObject.add('args', argsArray)
+
+      -- Save the updated launch configuration
+    options.setLaunchConfiguration(launchObject.toString())

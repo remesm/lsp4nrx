@@ -1,0 +1,34 @@
+package org.netrexx
+options strictcase
+
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.RunConfiguration
+
+import com.intellij.openapi.project.Project
+
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
+
+class NetRexxDapConfigurationFactory extends ConfigurationFactory
+
+  method NetRexxDapConfigurationFactory(configType = ConfigurationType)
+
+    super(configType)
+
+  method getId() public returns String
+
+    return 'NetRexxDapFactory'
+
+  method getOptionsClass() public returns Class
+
+    return DAPRunConfigurationOptions.class
+
+  method createTemplateConfiguration(project = Project) public returns RunConfiguration
+
+    config = NetRexxDapConfiguration(project, this, 'NetRexx Debug')
+
+    config.setServerId('NetRexx')
+
+    config.setServerName('NetRexx')
+
+    return config

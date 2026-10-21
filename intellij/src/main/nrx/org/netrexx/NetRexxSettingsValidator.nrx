@@ -1,0 +1,361 @@
+
+package org.netrexx
+options strictcase
+
+import com.intellij.execution.configurations.RunConfigurationOptions
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile
+
+import com.redhat.devtools.lsp4ij.dap.configurations.options.FileOptionConfigurable
+import com.redhat.devtools.lsp4ij.dap.configurations.options.WorkingDirectoryConfigurable
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
+import com.redhat.devtools.lsp4ij.dap.client.LaunchUtils
+import com.redhat.devtools.lsp4ij.dap.client.LaunchUtils.LaunchContext
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.FilenameIndex
+
+import java.io.File
+import org.netrexx.NetRexxFileType
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.diagnostic.Logger
+import com.google.gson.Gson
+import com.intellij.util.execution.ParametersListUtil
+
+
+class NetRexxSettingsValidator
+
+  properties public
+    proj         = Project
+    options      = RunConfigurationOptions
+    state        = NetRexxSettingsService.Setting
+    log          = Logger
+
+    workspaceDir = String ''
+    file         = String ''
+    cwd          = String ''
+
+
+/* Constructor
+  options only when DAP run configuration validation
+*/
+
+  method NetRexxSettingsValidator(proj_ = Project, options_ = RunConfigurationOptions null)
+    proj    = proj_
+    options = options_            -- options only for DAP run configuration validation
+
+    log     = Logger.getInstance(NetRexxSettingsValidator.class)
+
+    workspaceDir = ''
+    if proj \= null then do
+      basePath = proj.getBasePath()
+        if basePath \= null then
+          if basePath.trim().length() > 0 then workspaceDir = basePath
+    end
+    file = ''
+    cwd = ''
+
+  method resolveProgram() returns String signals IOException
+
+--    source = ''
+    file = (DAPRunConfigurationOptions options).getFile()
+
+    if file == null then
+      file = ''
+--    else
+--      source = 'configuration'
+
+
+    -- Otherwise use the currently selected .nrx editor
+    if file.trim().length() == 0 then do
+
+--      project = environment.getProject()
+      fileEditorMgr = FileEditorManager.getInstance(proj)
+      selectedFiles = fileEditorMgr.getSelectedFiles()
+      if selectedFiles.length > 0 then do
+        currentFile = selectedFiles[0]
+        file = currentFile.getPath()
+--        source = 'selection'
+--        log.info('NetRexx DAP: Found program 'file' from selection')
+      --  if currentFile.getName().toLowerCase().endsWith('.nrx') then
+      end
+    end
+
+    if file.trim().length() == 0 then
+      signal IllegalArgumentException('No NetRexx program configured or selected')
+
+    -- Split the Program field into individual filenames
+    entries = ParametersListUtil.parse(file)
+    resolvedFiles = ArrayList()
+    iterator = entries.iterator()
+
+    loop while iterator.hasNext()
+      entry = (String iterator.next())
+      fullPath = resolveProgramFile(entry)
+      resolvedFiles.add(fullPath)
+    end
+
+    -- Return all resolved absolute filenames,
+    -- preserving spaces within filenames
+    file = ParametersListUtil.join(resolvedFiles)
+--    log.info('resolveProgram : 'file' from 'source)
+
+    return file
+
+/*
+Precedence:
+1. Settings > DAP UI > JSON launch
+2. DAP Configuration
+3. NetRexx Settings
+4. Workspace/Program
+*/
+
+method resolveWorkingDirectory(program = String null, validateOnly = boolean 0) returns String
+
+  state = NetRexxSettingsService.getInstance(proj).getState()
+--  workspaceDir = environment.getProject().getBasePath()
+
+  cwdWarningShown = 0
+
+  -- Check Settings, DAP configuration, JSON params.
+  -- Validate AFTER selection: an invalid value uses the workspace fallback;
+
+  selectedCwd = String ''
+  source = String ''
+
+  if state.cwd \= null then do
+    if state.cwd.trim().length() > 0 then do
+      selectedCwd = state.cwd
+      source = 'NetRexx Settings'
+--     log.info('NetRexx resolve cwd : Found cwd : 'selectedCwd' in 'source)
+   end
+  end
+
+  if options \= null then do
+    dapCwd = (WorkingDirectoryConfigurable options).getWorkingDirectory()
+    if dapCwd \= null then do
+      if dapCwd.trim().length() > 0 then do
+        selectedCwd = dapCwd
+        source = 'DAP Configuration'
+  --      log.info('NetRexx resolve cwd : found cwd : 'selectedCwd' in 'source)
+
+      end
+    end
+
+   -- file = resolveProgram() tail -f /home/remesm/.cache/JetBrains/IntelliJIdea2026.2/log/idea.log
+
+    dapOptions = (DAPRunConfigurationOptions options)
+--    jsonParams = LaunchUtils.getDapParameters(dapOptions.getDapParameters(), -
+--                                                   LaunchUtils.LaunchContext(program, workspaceDir))
+    launchJson = dapOptions.getDapParameters()
+    if launchJson \= null then do
+      if launchJson.trim().length() > 0 then do
+        params = HashMap()
+        g = Gson()
+        jsonParams = (Map g.fromJson(launchJson, Map.class))
+        params.putAll(jsonParams)
+      end
+    end
+--    params.putAll(jsonParams)
+
+    jsonCwd = String ''
+    jsonValue = params.get('cwd')
+    if jsonValue \= null then do
+      jsonCwd = jsonValue.toString()
+      if jsonCwd \= null then do
+        if jsonCwd.trim().length() > 0 then do
+          source = 'JSON launch'
+--          log.info('NetRexx resolve cwd : found cwd : 'jsonCwd' in 'source)
+          if selectedCwd \= '' then
+            selectedCwd = jsonCwd.replace('${cwd}', selectedCwd)
+ --         else
+ --           selectedCwd = jsonCwd.replace('${cwd}', workspaceDir)
+        end
+      end
+    end
+  end
+
+  if selectedCwd.length() == 0 then do
+    selectedCwd = workspaceDir
+    source = 'workspaceFolder'
+  end
+
+
+  if selectedCwd.length() > 0 then do
+    selectedCwd = selectedCwd.replace('${workspaceFolder}', workspaceDir)
+  --  log.info('NetRexx resolve cwd : selected cwd : 'selectedCwd' from 'source)
+
+    cwd = resolveCwdCandidate(selectedCwd)
+
+
+
+    if cwd.length() > 0 then do
+--      log.info('resolveWorkingDirectory : 'selectedCwd' from 'source)
+      return cwd
+    end
+    -- getDapParameters may be called twice during one debug session:
+    -- notify only once per launcher instance.
+    if \cwdWarningShown & \validateOnly then do
+      Notification('org.netrexx.cwd', -
+        source': invalid cwd "'selectedCwd'". Using 'workspaceDir'.', NotificationType.WARNING).notify(proj)
+      cwdWarningShown = 1
+    end
+  end
+
+  if validateOnly then do
+    return ''
+  end
+
+  -- No cwd or an invalid cwd: use the workspace/program fallback.
+--  fallback = workspaceFallback(program)
+--  cwd = resolveCwdCandidate(fallback)
+
+--  log.info('NetRexx resolve cwd: fallback cwd : 'cwd)
+
+  if cwd.length() == 0 then
+    signal IllegalArgumentException('NetRexx: cannot determine a valid working directory.')
+  return cwd
+
+
+method resolveCwdCandidate(rawValue = String) private returns String
+
+  if rawValue == null then
+    return ''
+
+  value = rawValue.trim()
+  if value.length() == 0 then
+    return ''
+
+  candidate = File(value)
+
+  -- Relative cwd values are resolved against the workspace/project folder.
+  if \candidate.isAbsolute() then do
+    if workspaceDir \= null then
+      if workspaceDir.trim().length() > 0 then
+        candidate = File(workspaceDir, value)
+  end
+
+  if candidate.exists() & candidate.isDirectory() then
+    return candidate.getAbsolutePath()
+
+  return ''
+
+
+method resolveProgramFile(entry = String) returns String signals IOException
+
+  entry = entry.trim()
+
+  if entry.length() = 0 then
+    signal IllegalArgumentException('Empty program filename')
+
+  if entry.startsWith('-') then   -- an option to NetRexxC is allowed
+    return entry
+
+  if \entry.toLowerCase().endsWith('.nrx') then
+    signal IllegalArgumentException('Not a NetRexx file: 'entry)
+
+  source = File(entry)
+
+  -- Case 1: Already an absolute filename
+  if source.isAbsolute() then do
+    fullPath = source.getCanonicalPath()
+  end
+
+  -- Case 2: Filename contains a file separator.
+  -- Resolve relative to workspaceFolder, NOT cwd.
+  else if entry.indexOf(File.separator) >= 0 then do
+
+    dir = resolveWorkingDirectory()
+
+    if dir = null then
+      signal IllegalArgumentException('Cannot resolve working directory')
+
+    if dir.trim().length() = 0 then
+      signal IllegalArgumentException('Cannot resolve working directory')
+
+    source = File(dir, entry)
+
+    fullPath = source.getCanonicalPath()
+
+  end
+
+  -- Case 3: Bare filename, e.g. ctortest.nrx
+  else do
+    selectedFiles = FileEditorManager.getInstance(proj).getSelectedFiles()
+
+    fullPath = ''
+    matchCount = 0
+
+    loop i = 0 to selectedFiles.length - 1
+      selectedFile = selectedFiles[i]
+      if selectedFile.getName() = entry then do
+        matchCount = matchCount + 1
+        fullPath = selectedFile.getPath()
+      end
+    end
+    if matchCount > 1 then
+      signal IllegalArgumentException('Multiple selected files named 'entry'. Specify a relative path.')
+
+    -- Exactly one matching selected file
+ --   if matchCount = 1 then
+ --     log.info('ResolveProgramFile : 'fullPath)
+
+    -- Otherwise look for a matching file in the project
+    if fullPath.length() = 0 then do
+      scope = GlobalSearchScope.projectScope(proj)
+      matches = FilenameIndex.getVirtualFilesByName(proj, entry, scope)
+      if matches.isEmpty() then
+        signal IllegalArgumentException('NetRexx program 'entry' not found in workspace')
+
+      if matches.size() > 1 then
+        signal IllegalArgumentException('Multiple files named 'entry'. Specify a relative path.')
+
+      matchIterator = matches.iterator()
+      matchingFile = VirtualFile matchIterator.next()
+      fullPath = matchingFile.getPath()
+    end
+  end
+
+  -- Validate the resulting full pathname
+  source = File(fullPath)
+
+  if \source.isFile() then
+    signal IllegalArgumentException('NetRexx program 'fullPath' does not exist')
+
+  if \source.canRead() then
+    signal IllegalArgumentException('Cannot read NetRexx program 'fullPath)
+
+--  log.info('resolveProgramFile : 'fullPath)
+
+  return fullPath
+/*
+method workspaceFallback(program = String) private returns String
+
+  if workspaceDir \= null then
+    if workspaceDir.trim().length() > 0 then
+      return workspaceDir
+
+  -- No workspace/project is open: retain the single-file fallback.
+  if program \= null then do
+    if program.trim().length() > 0 then
+      return File(program).getParent()
+  end
+
+  return ''
+*/
+
+method getWorkspaceFolderPath() returns String
+
+  -- IntelliJ/LSP4IJ has a project root rather than VS Code's potentially
+  -- multi-root workspace folders. The project base path is the equivalent
+  -- workspace fallback for this launcher.
+
+  if proj \= null then do
+    basePath = proj.getBasePath()
+    if basePath \= null then
+      if basePath.trim().length() > 0 then
+        return basePath
+  end
+
+  return ''

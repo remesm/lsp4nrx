@@ -1,0 +1,69 @@
+package org.netrexx
+
+import com.intellij.openapi.project.Project
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
+import java.io.File
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+
+class NetRexxLspServerLauncher public extends OSProcessStreamConnectionProvider
+
+  method NetRexxLspServerLauncher(proj = Project) public
+    --state = NetRexxSettingsService.getInstance().getState()
+    state = NetRexxSettingsService.getInstance(proj).getState()
+    pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId('org.netrexx.lsp4nrx'))
+    dir = pluginDescriptor.getPluginPath().toAbsolutePath().toString()
+    jar = dir || '/lib/NetRexxC.jar'
+
+    if state.classpath \= null then if state.classpath.trim().length() > 0 then
+      jar = state.classpath.trim() || File.pathSeparator || jar
+
+    cmd = [String 'java', '-cp', jar, 'org.netrexx.lsp.NetRexxLspServer']
+    commandLine = GeneralCommandLine(cmd)
+
+    if state.onChange \= null then if state.onChange.trim().length() > 0 then
+      commandLine.addParameter(state.onChange.trim())
+
+    -- Settings cwd also has priority for LSP. Relative paths are based
+    -- on the IntelliJ project root, not on the IDE's process directory.
+    workspaceDir = proj.getBasePath()
+    configuredCwd = String ''
+    if state.cwd \= null then configuredCwd = state.cwd.trim()
+
+    validWorkdir = String ''
+    if configuredCwd.length() > 0 then do
+      if configuredCwd.indexOf('${workspaceFolder}') >= 0 then do
+        if workspaceDir \= null then
+          if workspaceDir.trim().length() > 0 then
+            configuredCwd = configuredCwd.replace('${workspaceFolder}', workspaceDir)
+      end
+      workdir = File(configuredCwd)
+      if \workdir.isAbsolute() then do
+        if workspaceDir \= null then
+          if workspaceDir.trim().length() > 0 then
+            workdir = File(workspaceDir, configuredCwd)
+      end
+      if workdir.isAbsolute() then
+        if workdir.isDirectory() then
+          validWorkdir = workdir.getAbsolutePath()
+
+      if validWorkdir.length() == 0 then
+        Notification('org.netrexx.cwd', -
+          'NetRexx Settings: invalid cwd "'configuredCwd'". Using 'workspaceDir'.', NotificationType.WARNING).notify(proj)
+    end
+
+    if validWorkdir.length() == 0 then do
+      if workspaceDir \= null then
+        if File(workspaceDir).isDirectory() then
+          validWorkdir = File(workspaceDir).getAbsolutePath()
+    end
+    if validWorkdir.length() > 0 then
+      commandLine.setWorkDirectory(validWorkdir)
+
+    if state.log then
+      commandLine.addParameter('--log')
+
+    setCommandLine(commandLine)

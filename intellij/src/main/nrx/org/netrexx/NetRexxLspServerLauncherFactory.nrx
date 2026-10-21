@@ -1,0 +1,19 @@
+package org.netrexx
+
+import com.intellij.openapi.project.Project
+import com.redhat.devtools.lsp4ij.LanguageServerFactory
+import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
+
+class NetRexxLspServerLauncherFactory public implements LanguageServerFactory
+
+  method createConnectionProvider(project = Project) public returns StreamConnectionProvider
+    return NetRexxLspServerLauncher(project)
+
+  -- If client-specific features are ever needed:
+  -- createLanguageClient(project = Project) public returns LanguageClientImpl
+  --   return NetRexxLspClient(project)
+  --
+  -- If a custom server API needs to be exposed:
+  -- getServerInterface() public returns Class
+  --   return MyCustomServerAPI.class

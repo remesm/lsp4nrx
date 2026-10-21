@@ -1,0 +1,18 @@
+{
+  "id": "netrexx",
+  "name": "NetRexx",
+  "launch": {
+    "default": "java -cp NetRexx.jar org.netrexx.lsp.NetRexxDapServer"
+  },
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "NetRexx",
+        "patterns": [
+          "*.nrx"
+        ]
+      },
+      "languageId": "netrexx"
+    }
+  ]
+}
