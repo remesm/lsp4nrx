@@ -9,12 +9,20 @@
 	"activationEvents": [
 		"onLanguage:netrexx",
 		"onDebug:netrexx",
-    "onStartupFinished",
-    "onDebugResolve:netrexx"
+		"onStartupFinished",
+		"onDebugResolve:netrexx"
 	],
 	"engines": {
 		"vscode": "^1.100.0"
 	},
+	"dependencies": {
+   		 "vscode-languageclient": "^9.0.1"
+	},
+	"devDependencies": {
+		"@types/node": "^20.0.0",
+    		"@types/vscode": "1.100.0",
+    		"typescript": "^5.0.0"
+ 	},
 	"main": "./client/out/extension.js",
 	"contributes": {
 		"languages": [
@@ -37,16 +45,22 @@
 			}
 		],
 		"breakpoints": [
-			{ "language": "netrexx" }
+			{
+				"language": "netrexx"
+			}
 		],
 		"debuggers": [
 			{
 				"type": "netrexx",
 				"label": "NetRexx Debug",
-				"languages": ["netrexx"],
+				"languages": [
+					"netrexx"
+				],
 				"configurationAttributes": {
 					"launch": {
-						"required": ["program"],
+						"required": [
+							"program"
+						],
 						"properties": {
 							"program": {
 								"type": "string",
@@ -54,20 +68,19 @@
 								"default": "${file}"
 							},
 							"args": {
-								"type": "array",
-								"items": { "type": "string" },
-								"default": [],
-								"description": "Arguments passed to the program"
+								"type": [
+									"array",
+									"string"
+								],
+								"items": {
+									"type": "string"
+								},
+								"description": "Arguments passed to the program."
 							},
 							"cwd": {
 								"type": "string",
 								"default": "${workspaceFolder}",
 								"description": "Current working directory"
-							},
-							"args": {
-   						  "type": ["array", "string"],
-						    "items": { "type": "string" },
-   							"description": "Arguments passed to the program."
 							}
 						}
 					}
@@ -94,11 +107,10 @@
 				]
 			}
 		],
- 
 		"configuration": [
 			{
 				"title": "Common settings",
-		    "id": "netrexx.common",
+				"id": "netrexx.common",
 				"order": 1,
 				"type": "object",
 				"scope": "resource",
@@ -124,12 +136,11 @@
 						"scope": "resource",
 						"description": "Enable verbose logging on stderr"
 					}
-
 				}
 			},
 			{
 				"title": "Language Server Protocol settings",
-		    "id": "netrexx.lsp",
+				"id": "netrexx.lsp",
 				"order": 2,
 				"type": "object",
 				"scope": "resource",
@@ -145,7 +156,7 @@
 			},
 			{
 				"title": "Debug Adapter Protocol settings",
-		    "id": "netrexx.dap",
+				"id": "netrexx.dap",
 				"order": 3,
 				"type": "object",
 				"scope": "resource",
@@ -173,7 +184,6 @@
 					},
 					"netrexx.dap.arguments": {
 						"order": 2,
-
 						"type": "string",
 						"default": "",
 						"scope": "resource",
@@ -182,5 +192,8 @@
 				}
 			}
 		]
+	},
+	"dependencies": {
+		"typescript": "^7.0.2"
 	}
 }
