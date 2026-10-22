@@ -20,6 +20,7 @@ To debug a program, create a run/debug configuration:
 * Provide name 'NetRexx'
 * Click Apply
 * Click OK
+
 You can have more than one run/debug configuration.<br>
 In the debug configuration, you can set the program(s) to interpret, and optional arguments. If no program is specified, the currently active file is debugged. The file must have .nrx extension.
 
