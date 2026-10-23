@@ -1,17 +1,17 @@
 # NetRexx Plugin
 
-Client-side implementation for Language Server Protocol and Debug Adapter Protocol support for NetRexx.<br>
 Written in NetRexx for NetRexx. 
 
 ## Language Server Protocol (LSP) Functionality
-The Language Server handles any .nrx file as NetRexx source code. It includes the following features:
+The Language Server handles any **.nrx** file as NetRexx source code. It includes the following features:
 * **Diagnostics**: Regenerated on each file change or save.
 * **Document Symbols**: Generates outlines in Structure for classes and methods.
 * **Textmate** syntax highlighting.
 
 ## Debug Adapter Protocol (DAP) Functionality
 The Debug Server provides debugging support for NetRexx source code.<br>
-The debugger starts the NetRexx source file(s) in interpreted mode. Breakpoints can be set in the .nrx file. Execution can be single-stepped, local variables and properties can be examined and updated.
+The debugger starts the NetRexx source file(s) in interpreted mode.<br> 
+Breakpoints can be set in the **.nrx** file. Execution can be single-stepped, local variables and properties can be examined and updated.
 
 To debug a program, create a run/debug configuration:
 * Edit configurations (next to Current file and the run/debug icons)
@@ -40,4 +40,7 @@ The plugin has followings settings:
   * **program** : program(s) to interpret, if empty, the active file is used.
   * **arguments** : arguments to the program.
 
+Currently limited to a single thread.
+
+Based on NetRexxC.jar 5.20-beta, built from master [dabe17a7] (<br>
 https://www.netrexx.org
