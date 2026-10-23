@@ -1,3 +1,4 @@
+<!-- Plugin description -->
 # NetRexx Plugin
 
 Written in NetRexx for NetRexx. 
@@ -44,3 +45,4 @@ Currently limited to a single thread.
 
 Based on NetRexxC.jar 5.20-beta, built from master [dabe17a7] (<br>
 https://www.netrexx.org
+<!-- Plugin description end -->
