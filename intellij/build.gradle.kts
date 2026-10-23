@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.netrexx"
-version = "1.0.4"
+version = "1.0.5"
 
 repositories {
     maven {
