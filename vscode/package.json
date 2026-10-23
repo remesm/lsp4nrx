@@ -1,6 +1,6 @@
 {
 	"name": "NetRexx",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Language Server Protocol and Debug Adapter Protocol support for NetRexx",
 	"displayName": "NetRexx Language",
 	"publisher": "MRE",
