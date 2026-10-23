@@ -6,68 +6,20 @@
     <depends>org.jetbrains.plugins.textmate</depends>
 
     <id>org.netrexx.lsp4nrx</id>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <name>NetRexx</name>
-    <vendor url="https://www.rexxla.org">RexxLA</vendor>
+    <vendor> MRE </vendor>
+    description = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
+    val start = "<!-- Plugin description -->"
+    val end = "<!-- Plugin description end -->"
 
-    <description><![CDATA[
-<h2>Language Server Protocol and Debug Adapter Protocol support for NetRexx</h1>
-<p>Written in NetRexx for NetRexx.</p>
-<h3>Language Server Protocol (LSP) Functionality</h2>
-<p>The Language Server handles any <strong>.nrx</strong> file as NetRexx source code. It includes the following features:</p>
- <ul>
-   <li><strong>Diagnostics:</strong> Regenerated on each file change or save.</li>
-   <li><strong>Document Symbols:</strong> Generates outlines in Structure for classes and methods.</li>
-   <li><strong>Textmate</strong> syntax highlighting.</li>
- </ul>
-<h3>Debug Adapter Protocol (DAP) Functionality</h2>
-<p>The Debug Server provides debugging support for NetRexx source code. The debugger starts the NetRexx source file(s)
-in interpreted mode. Breakpoints can be set in the <strong>.nrx</strong> file. Execution can be single-stepped,
- local variables and properties can be examined and updated.</p>
-<p>To debug a program, create a run/debug configuration:</p>
- <ul>
-  <li>Edit configurations (next to Current file  and the run/debug icons)</li>
-  <li>Click Add new run configuration</li>
-  <li>Select *NetRexx Debug* from the *Add new configuration* list</li>
-  <li>Provide name 'NetRexx'</li>
-  <li>Click Apply</li>
-  <li>Click OK</li>
- </ul>
- <p>You can have more than one run/debug configuration.</p>
- <p>In the debug configuration, you can set the program(s) to interpret, and optional arguments. If no program is specified,
- the currently active file is debugged. The file must have .nrx extension.</p>
-<h3>Settings</h2>
-<p>The plugin has followings settings:</p>
- <ul>
-  <li>Common settings</li>
-   <ul>
-    <li><code>classpath</code> : classpath used during translation/interpretation</li>
-    <li><code>cwd</code> : current working directory</li>
-    <li><code>--log</code> : show JSON-RPC messages on stderr</li>
-   </ul>
-  <li>LSP settings</li>
-   <ul>
-    <li><code>--onChange=2000</code> : Sets the delay for interactive parsing to 2 seconds.</li>
-    <li><code>--onChange=off</code> : Disables interactive parsing.</li>
-   </ul>
-  <li>DAP settings</li>
-   <ul>
-    <li><code>--rx</code> : Exposes the internal RxInterpreter in class instances.</li>
-    <li><code>--cl</code> : Single step per clause (defaults per line).</li>
-   </ul>
-  <li>Debug configuration</li>
-   <ul>
-    <li><code>program</code> : program(s) to interpret, if empty, the active file is used.</li>
-    <li><code>arguments</code> : arguments to the program.</li>
-   </ul>
- </ul>
-
-
-<p>Currently limited to a single thread.</p>
-<p>Depends on LSP4IJ.</p>
-<p>Based on NetRexxC.jar 5.20-beta</p>
-<p>https://www.netrexx.org</p>
-]]></description>
+    with(it.lines()) {
+      if (!containsAll(listOf(start, end))) {
+        throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
+      }
+      subList(indexOf(start) + 1, indexOf(end)).joinToString("\n").let(::markdownToHTML)
+      }
+    }
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup
