@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "org.netrexx"
-version = "1.0.5"
+version = "1.0.6"
 
 repositories {
     maven {

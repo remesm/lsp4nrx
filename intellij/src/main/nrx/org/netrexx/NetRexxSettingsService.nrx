@@ -50,6 +50,7 @@ class NetRexxSettingsService public final
     set.cwd = prop.getValue(PREFIX'cwd', '')
     set.rx = prop.getValue(PREFIX'rx', 0)
     set.cl = prop.getValue(PREFIX'cl', 0)
+    set.pt = prop.getValue(PREFIX'pt', 0)
     return set
 
   method saveState(set_ = Setting)
@@ -59,12 +60,14 @@ class NetRexxSettingsService public final
     set.cwd = set_.cwd
     set.rx = set_.rx
     set.cl = set_.cl
+    set.pt = set_.pt
     prop.setValue((PREFIX'onChange'), set_.onChange)
     prop.setValue(PREFIX'classpath', set_.classpath)
     prop.setValue(PREFIX'log', set_.log, 0)
     prop.setValue(PREFIX'cwd', set_.cwd)
     prop.setValue(PREFIX'rx', set_.rx, 0)
     prop.setValue(PREFIX'cl', set_.cl, 0)
+    prop.setValue(PREFIX'pt', set_.pt, 0)
 
 
 class NetRexxSettingsService.Setting public
@@ -75,4 +78,5 @@ class NetRexxSettingsService.Setting public
     cwd       = String ''
     rx        = boolean 0
     cl        = boolean
+    pt        = boolean 0
 

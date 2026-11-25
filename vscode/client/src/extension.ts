@@ -583,6 +583,7 @@ class NetRexxDebugAdapterFactory implements DebugAdapterDescriptorFactory {
         const dapconfig = getScopedConfig('netrexx.dap', program);
         const exposeInterpreter = dapconfig.get<boolean>('rx', false);
         const breakPerClause = dapconfig.get<boolean>('cl', false);
+        const breakPerThread = dapconfig.get<boolean>('pt', false);
 
         log.info('DAP: createDebugAdapterDescriptor');
         log.info('DAP configuration:', session.configuration);
@@ -611,6 +612,9 @@ class NetRexxDebugAdapterFactory implements DebugAdapterDescriptorFactory {
         }
         if (breakPerClause) {
             args.push('--cl')
+        }
+        if (breakPerThread) {
+            args.push('--pt')
         }
 
         log.info('DAP command:', 'java', args);

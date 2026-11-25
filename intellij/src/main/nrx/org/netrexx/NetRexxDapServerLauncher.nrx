@@ -95,6 +95,9 @@ class NetRexxDapServerLauncher extends DebugAdapterDescriptor
     if state.cl then
       commandLine.addParameter('--cl')
 
+    if state.pt then
+      commandLine.addParameter('--pt')
+
     cwd  = validator.resolveWorkingDirectory(file, 1)
 
     if cwd.trim().length() = 0 then do

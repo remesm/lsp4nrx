@@ -6,7 +6,7 @@
     <depends>org.jetbrains.plugins.textmate</depends>
 
     <id>org.netrexx.lsp4nrx</id>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <name>NetRexx</name>
     <vendor> MRE </vendor>
     <description><![CDATA[

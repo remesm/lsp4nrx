@@ -304,7 +304,7 @@ method resolveProgramFile(entry = String) returns String signals IOException
     -- Otherwise look for a matching file in the project
     if fullPath.length() = 0 then do
       scope = GlobalSearchScope.projectScope(proj)
-      matches = FilenameIndex.getVirtualFilesByName(proj, entry, scope)
+      matches = FilenameIndex.getVirtualFilesByName(entry, scope)
       if matches.isEmpty() then
         signal IllegalArgumentException('NetRexx program 'entry' not found in workspace')
 

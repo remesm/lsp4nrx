@@ -37,12 +37,17 @@ The plugin has followings settings:
 * DAP settings
   * **--rx** : Exposes the internal RxInterpreter in class instances.
   * **--cl** : Single step per clause (defaults per line).
+  * **--pt** : Break per thread (default stop all threads)
 * Debug configuration
   * **program** : program(s) to interpret, if empty, the active file is used.
   * **arguments** : arguments to the program.
 
-Currently limited to a single thread.
+### Changes:
+* lsp4nrx-1.0.6:
+  * multi-thread support
+  * break per thread or stop all threads
+  * validate breakpoint placement against executable lines
 
-Based on NetRexxC.jar 5.20-beta, built from master [dabe17a7] (<br>
+Based on NetRexxC.jar 5.20-beta, built from master [45324d35] (<br>
 https://www.netrexx.org
 <!-- Plugin description end -->
